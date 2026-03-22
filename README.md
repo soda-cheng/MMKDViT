@@ -1,4 +1,4 @@
-# GFRCKD
+# MMKDViT
 ## **Paper: Multi-Layer Multi-Knowledge Distillation for Vision Transformers**
 
 ![](D:\git-supervise\mmkdvit\MMKDViT\docs\whole.jpg)
