@@ -52,6 +52,7 @@ class TransformerEncoderLayer(BaseModule):
         super(TransformerEncoderLayer, self).__init__(init_cfg=init_cfg)
 
         self.embed_dims = embed_dims
+        self.num_heads = num_heads
 
         self.norm1_name, norm1 = build_norm_layer(
             norm_cfg, self.embed_dims, postfix=1)
@@ -96,6 +97,7 @@ class TransformerEncoderLayer(BaseModule):
         x = x + self.attn(self.norm1(x))
         x = self.ffn(self.norm2(x), identity=x)
         return x
+
 
 
 @MODELS.register_module()
@@ -208,18 +210,25 @@ class VisionTransformer(BaseBackbone):
                 'feedforward_channels': 192 * 4
             }),
         **dict.fromkeys(
-            ['deit-s', 'deit-small'], {
+            ['deit-s', 'deit-small', 'dinov2-s', 'dinov2-small'], {
                 'embed_dims': 384,
                 'num_layers': 12,
                 'num_heads': 6,
                 'feedforward_channels': 384 * 4
             }),
         **dict.fromkeys(
-            ['deit-b', 'deit-base'], {
+            ['deit-b', 'deit-base', 'dinov2-b', 'dinov2-base'], {
                 'embed_dims': 768,
                 'num_layers': 12,
                 'num_heads': 12,
                 'feedforward_channels': 768 * 4
+            }),
+        **dict.fromkeys(
+            ['dinov2-g', 'dinov2-giant'], {
+                'embed_dims': 1536,
+                'num_layers': 40,
+                'num_heads': 24,
+                'feedforward_channels': 6144
             }),
     }
     # Some structures have multiple extra tokens, like DeiT.
@@ -310,7 +319,7 @@ class VisionTransformer(BaseBackbone):
 
         # stochastic depth decay rule
         dpr = np.linspace(0, drop_path_rate, self.num_layers)
-        #定义每层layer
+
         self.layers = ModuleList()
         if isinstance(layer_cfgs, dict):
             layer_cfgs = [layer_cfgs] * self.num_layers
@@ -349,6 +358,13 @@ class VisionTransformer(BaseBackbone):
         # freeze stages only when self.frozen_stages > 0
         if self.frozen_stages > 0:
             self._freeze_stages()
+
+        self.attn = MultiheadAttention(
+            embed_dims=self.embed_dims,
+            num_heads=self.arch_settings['num_heads'],
+            proj_drop=drop_rate,
+            dropout_layer=dict(type='DropPath', drop_prob=drop_path_rate),
+            qkv_bias=qkv_bias)
 
     @property
     def norm1(self):
@@ -390,11 +406,11 @@ class VisionTransformer(BaseBackbone):
                                                 self.num_extra_tokens)
 
     @staticmethod
-    def resize_pos_embed(*args, **kwargs):#调整大小
+    def resize_pos_embed(*args, **kwargs):
         """Interface for backward-compatibility."""
         return resize_pos_embed(*args, **kwargs)
 
-    def _freeze_stages(self):#冻结阶段
+    def _freeze_stages(self):
         # freeze position embedding
         if self.pos_embed is not None:
             self.pos_embed.requires_grad = False
@@ -445,18 +461,25 @@ class VisionTransformer(BaseBackbone):
             if i == len(self.layers) - 1 and self.final_norm:
                 x = self.norm1(x)
 
-            if  i in [1]:
+            if i in [1]:
                 low_f_s = x[:,1:]
                 low_f = torch.cat((low_f, low_f_s.unsqueeze(1)),dim=1)
             elif i == 0:
                 low_f = x[:,1:]
                 low_f = low_f.unsqueeze(1)
 
-            if  i == len(self.layers) - 1:
+            ##
+            if i == len(self.layers) - 1:
+                high_cls = x[:, 0]
+                high_a = self.attn.a_qk(x)
                 high_f = x[:,1:]
 
-            if i == int(0.5*len(self.layers)) - 1:
+            if i == len(self.layers) - 2:
+                high_a2 = self.attn.a_qk(x)
                 mid_token = x[:, 0]
+
+            #if i == int(0.5*len(self.layers)) - 1:
+            #    mid_token = x[:, 0]
 
             if i in self.out_indices:
                 B, _, C = x.shape
@@ -476,7 +499,7 @@ class VisionTransformer(BaseBackbone):
                     patch_token = self.norm2(patch_token)
                 if self.output_cls_token:
                     # out = [patch_token, cls_token]
-                    out = [[low_f, high_f, mid_token], cls_token]
+                    out = [[high_cls, high_a, high_f], cls_token]
                 else:
                     out = patch_token
                 outs.append(out)

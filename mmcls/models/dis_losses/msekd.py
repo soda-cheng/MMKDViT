@@ -11,7 +11,7 @@ class MSEKDLoss(nn.Module):
                  use_this,
                  student_dims,
                  teacher_dims,
-                 alpha_msekd=0.00003,
+                 alpha_msekd=0.00002,
                  ):
         super(MSEKDLoss, self).__init__()
         self.alpha_msekd = alpha_msekd
@@ -33,23 +33,21 @@ class MSEKDLoss(nn.Module):
             preds_S(List): [B*2*N*D, B*N*D], student's feature map
             preds_T(List): [B*2*N*D, B*N*D], teacher's feature map
         """
-        low_s = preds_S[0]
-        low_t = preds_T[0]
+        ##high_t=(256, 384)
+        high_s = preds_S[0]
+        high_t = preds_T[0]
 
-        B = low_s.shape[0]
+        B = high_s.shape[0]
         loss_mse = nn.MSELoss(reduction='sum')
 
-        if self.align2 is not None:
-            for i in range(2):
-                if i == 0:
-                    xc = self.align2[i](low_s[:,i]).unsqueeze(1)
-                else:
-                    xc = torch.cat((xc, self.align2[i](low_s[:,i]).unsqueeze(1)),dim=1)
+        if self.align is not None:
+            x = self.align(high_s)
         else:
-            xc = low_s
+            x = high_s
 
-        loss_lr = loss_mse(xc, low_t) / B * self.alpha_msekd
-        return loss_lr
+
+        loss_fd = loss_mse(x, high_t) / B * self.alpha_msekd
+        return loss_fd
 
 
 

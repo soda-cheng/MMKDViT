@@ -545,6 +545,7 @@ class MultiheadAttention(BaseModule):
 
         attn = (q @ k.transpose(-2, -1)) * self.scale
         attn = attn.softmax(dim=-1)
+        #attn_m = attn
         attn = self.attn_drop(attn)
 
         x = (attn @ v).transpose(1, 2).reshape(B, N, self.embed_dims)
@@ -554,6 +555,19 @@ class MultiheadAttention(BaseModule):
         if self.v_shortcut:
             x = v.squeeze(1) + x
         return x
+
+    def a_qk(self, x):
+        B, N, _ = x.shape
+        qkv = self.qkv(x).reshape(B, N, 3, self.num_heads,
+                                  self.head_dims).permute(2, 0, 3, 1, 4)
+        q, k, v = qkv[0], qkv[1], qkv[2]
+
+        attn = (q @ k.transpose(-2, -1)) * self.scale
+        attn = attn.softmax(dim=-1)
+        #attn_m = attn
+        a = self.attn_drop(attn)
+
+        return a
 
 
 class BEiTAttention(BaseModule):

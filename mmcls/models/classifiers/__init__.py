@@ -5,10 +5,13 @@ from .image import ImageClassifier
 from .timm import TimmClassifier
 from .distiller import ClassificationDistiller
 from .GFRCKDdistiller import GFRCKDdistiller
-from .GFRCKDimage import GFRCKDimage
+from .GFRCKDimage import MARKDimage
+from .DDFDdistiller import DDVTFDDistiller
+from .SPEKDdistiller import SPEKDDistiller
 
 __all__ = [
     'BaseClassifier', 'ImageClassifier', 'TimmClassifier',
     'HuggingFaceClassifier', 'ClassificationDistiller',
-    'GFRCKDdistiller', 'GFRCKDimage',
+    'GFRCKDdistiller', 'MARKDimage', 'DDVTFDDistiller',
+    'SPEKDdistiller'
 ]

@@ -397,6 +397,13 @@ class DeiT3(VisionTransformer):
                 norm_cfg, self.embed_dims, postfix=1)
             self.add_module(self.norm1_name, norm1)
 
+        self.attn = MultiheadAttention(
+            embed_dims=self.embed_dims,
+            num_heads=self.arch_settings['num_heads'],
+            proj_drop=drop_rate,
+            dropout_layer=dict(type='DropPath', drop_prob=drop_path_rate),
+            qkv_bias=qkv_bias)
+
     def forward(self, x):
         B = x.shape[0]
         x, patch_resolution = self.patch_embed(x)
@@ -431,8 +438,13 @@ class DeiT3(VisionTransformer):
                 low_f = x[:,1:]
                 low_f = low_f.unsqueeze(1)
 
-            if  i == len(self.layers) - 1:
-                high_f = x[:,1:]
+            if i == len(self.layers) - 1:
+                high_cls = x[:, 0]
+                high_a = self.attn.a_qk(x)
+
+            if i == len(self.layers) - 2:
+                high_a2 = self.attn.a_qk(x)
+                mid_token = x[:, 0]
 
             if i in self.out_indices:
                 B, _, C = x.shape
@@ -446,7 +458,7 @@ class DeiT3(VisionTransformer):
                     cls_token = None
                 if self.output_cls_token:
                     # out = [patch_token, cls_token]
-                    out = [[low_f, high_f], cls_token]
+                    out = [[high_cls, high_a, mid_token], cls_token]
                 else:
                     out = patch_token
                 outs.append(out)

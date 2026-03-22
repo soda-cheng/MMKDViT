@@ -43,8 +43,8 @@ class GFRCKDLoss(nn.Module):
             preds_S(List): [B*2*N*D, B*N*D], student's feature map
             preds_T(List): [B*2*N*D, B*N*D], teacher's feature map
         """
-        high_s = preds_S[1]
-        high_t = preds_T[1]
+        high_s = preds_S[0]
+        high_t = preds_T[0]
 
         loss_mse = nn.MSELoss(reduction='sum')
 

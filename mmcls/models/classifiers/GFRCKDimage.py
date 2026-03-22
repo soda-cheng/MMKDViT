@@ -10,7 +10,7 @@ from .base import BaseClassifier
 
 
 @MODELS.register_module()
-class GFRCKDimage(BaseClassifier):
+class MARKDimage(BaseClassifier):
     def __init__(self,
                  backbone: dict,
                  neck: Optional[dict] = None,
@@ -31,7 +31,7 @@ class GFRCKDimage(BaseClassifier):
             # Set batch augmentations by `train_cfg`
             data_preprocessor['batch_augments'] = train_cfg
 
-        super(GFRCKDimage, self).__init__(
+        super(MARKDimage, self).__init__(
             init_cfg=init_cfg, data_preprocessor=data_preprocessor)
 
         if not isinstance(backbone, nn.Module):

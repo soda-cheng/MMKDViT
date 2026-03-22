@@ -61,6 +61,7 @@ class USKDLoss(nn.Module):
             target = torch.zeros_like(logit_s).scatter_(1, label, 0.9) + 0.1 * torch.ones_like(logit_s) / c
         
         # weak logit
+        print(fea_mid.shape)
         w_fc = self.fc(fea_mid)
         w_i = self.log_softmax(w_fc)
         loss_weak = - (self.mu * target * w_i).sum(dim=1).mean()

@@ -1,11 +1,11 @@
 # GFRCKD
-## **Paper: Vision Transformer-Based Generated Feature Distillation Using Recycled Class-Token for Visual Recognition**
+## **Paper: Multi-Layer Multi-Knowledge Distillation for Vision Transformers**
 
-![](D:\KYYC\GFRCKD论文内容\图片\readme_0.png)
+![](D:\git-supervise\mmkdvit\MMKDViT\docs\whole.jpg)
 
-Vision Transformer (ViT) has recently achieved remarkable results across various visual tasks, leveraging its unique multi-heads self-attention mechanism. However, the high-performing ViT models often possess large token dimensions, deep network depths, and an enormous number of parameters, rendering them impractical for real-world applications. In contrast, lightweight ViT models with smaller token dimensions struggle to learn comprehensive feature knowledge. Knowledge distillation has been proposed as a model compression technique to transfer rich knowledge in large ViT models to compact ones. Current distillation methods for ViT models primarily focus on logits-based distillation, generally overlooking intermediate feature knowledge and classification knowledge within the class-token. 
+Vision Transformers (ViTs) have shown strong representation capability by modeling long-range dependencies through self-attention. However, ViTs performance often degrades when large-scale labeled data are limited. Knowledge distillation offers an effective solution by transferring teacher knowledge to lightweight students, yet existing methods mostly focus on either final logits or single-stage intermediate features, overlooking the hierarchical structural knowledge and class-specific information distributed across Transformer layers. 
 
-In response, this paper proposes an efficient distillation method named Generated Feature with Recycled Class-Token Knowledge Distillation (GFRCKD). Specifically, we recycle the class token from the pre-trained teacher model after dimension conversion, and incorporate it into the student model to form a new classifier for inference.Due to significant differences in the deep layer attention of ViT models, it is challenging for the student to directly mimic the teacher final features.
+To address this limitation, we propose Multi-Layer Multi-Knowledge Distillation for ViTs (MMKDViT),  a unified framework that transfers both spatial structure and class-level semantics in a layer-aware manner. Specifically, MMKDViT introduces Multi-Layer Attention Distillation to preserve token dependency structures and Multi-Layer Decoupled Dlass Distillation to separately supervise primary and non-primary class knowledge, thereby improving feature selectivity and class discrimination.  Experiments on datasets like ImageNet-1k, CIFAR100, and CUB-2011 demonstrate the effectiveness of MMKDViT, outperforming existing ViTs distillation methods and achieving superior results.
 
 ## Train
 
@@ -29,16 +29,14 @@ python pth_transfer.py --dis_path $dis_ckpt --output_path $new_mmcls_ckpt
 bash tools/dist_test.sh configs/deit/deit-tiny_pt-4xb256_in1k.py $new_mmcls_ckpt 8 --metrics accuracy
 ```
 
-## Results
 
-<img src="D:\KYYC\GFRCKD论文内容\图片\deit_imagenet.png" style="zoom:50%;" />
 
 ## Citation
 
 ```
-@article{yi2026gfrckd,
-  title={Vision Transformer-Based Generated Feature Distillation Using Recycled Class-Token for Visual Recognition},
-  author={Jianping Gou, Cheng Yi, Liyuan Sun, Lan Du, Xin Luo and Yi Zhang},
+@article{yi2026MMKDViT,
+  title={Multi-Layer Multi-Knowledge Distillation for Vision Transformers},
+  author={Jianping Gou, Cheng Yi, Lan Du, Yujun Cai, Zhang Yi, Dacheng Tao},
   year={2026}
 }
 ```

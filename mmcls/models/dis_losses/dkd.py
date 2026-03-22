@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from mmcls.registry import MODELS
 
+
 def _get_gt_mask(logit, gt_label):
     gt_label = gt_label.reshape(-1)
     mask = torch.zeros_like(logit).scatter_(1, gt_label.unsqueeze(1), 1).bool()
@@ -20,6 +21,7 @@ def cat_mask(t, mask1, mask2):
     t2 = (t * mask2).sum(1, keepdims=True)
     rt = torch.cat([t1, t2], dim=1)
     return rt
+
 
 @MODELS.register_module()
 class DKDLoss(nn.Module):
@@ -45,9 +47,9 @@ class DKDLoss(nn.Module):
         pred_teacher = cat_mask(pred_teacher, gt_mask, other_mask)
         log_pred_student = torch.log(pred_student)
         tckd_loss = (
-            F.kl_div(log_pred_student, pred_teacher, size_average=False)
-            * (self.temp**2)
-            / gt_label.shape[0]
+                F.kl_div(log_pred_student, pred_teacher, size_average=False)
+                * (self.temp ** 2)
+                / gt_label.shape[0]
         )
         pred_teacher_part2 = F.softmax(
             logit_t / self.temp - 1000.0 * gt_mask, dim=1
@@ -56,11 +58,10 @@ class DKDLoss(nn.Module):
             logit_s / self.temp - 1000.0 * gt_mask, dim=1
         )
         nckd_loss = (
-            F.kl_div(log_pred_student_part2, pred_teacher_part2, size_average=False)
-            * (self.temp**2)
-            / gt_label.shape[0]
+                F.kl_div(log_pred_student_part2, pred_teacher_part2, size_average=False)
+                * (self.temp ** 2)
+                / gt_label.shape[0]
         )
 
         return self.alpha * tckd_loss + self.beta * nckd_loss
 
-        
